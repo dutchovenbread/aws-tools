@@ -7,10 +7,11 @@ from typing import Any, Iterable
 def invoke_function(
   clients: dict[str, dict[str, dict[str, Any]]],
   function_name: str,
-  invoked_function_parameters: Iterable[Any] | None = None,
+  *,
+  parameters: Iterable[Any] | None = None,
 ) -> list[tuple[str, str, str, Any]]:
   results: list[tuple[str, str, str, Any]] = []
-  parameters = list(invoked_function_parameters or [])
+  parameters = list(parameters or [])
 
   def _call_method(
     profile_name: str,
