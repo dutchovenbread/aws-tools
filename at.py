@@ -61,6 +61,10 @@ def build_parser() -> argparse.ArgumentParser:
     "ec2list",
     help="List EC2 instances for all profile/region combinations.",
   )
+  subparsers.add_parser(
+    "rdslist",
+    help="List RDS instances for all profile/region combinations.",
+  )
   # Placeholder subcommand
   subparsers.add_parser("example", help="Example subcommand (placeholder).")
 
@@ -111,6 +115,14 @@ def main(argv: list[str] | None = None) -> int:
     result = invoke_function(clients, function_name, None)
     headers, output = output_parsing.parse_ec2list(result)
     console_print(headers, output)
+    return 0
+
+  if args.command == "rdslist":
+    function_name = "describe_db_instances"
+    sessions, clients = create_clients(profiles, regions, ["rds"])
+    instances_result = invoke_function(clients, function_name, None)
+    function_name = "describe_db_clusters"
+    clusters_result = invoke_function(clients, function_name, None)
     return 0
 
   # TODO: route subcommands here

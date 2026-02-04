@@ -43,3 +43,30 @@ def parse_ec2list(
 				)
 
 	return headers, output
+
+
+def parse_rdslist(
+	results: list[tuple[str, str, str, dict[str, Any]]],
+) -> tuple[list[str], list[list[str]]]:
+	headers = ["profile", "region", "name"]
+	output: list[list[str]] = []
+
+	for profile, region, _client_type, response in results:
+		for cluster in response.get("DBClusters", []) or []:
+			output.append(
+				[
+					profile,
+					region,
+					str(cluster.get("DatabaseName", "")),
+				]
+			)
+		for instance in response.get("DBInstances", []) or []:
+			output.append(
+				[
+					profile,
+					region,
+					str(instance.get("DBName", "")),
+				]
+			)
+
+	return headers, output
