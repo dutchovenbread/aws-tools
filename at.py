@@ -6,7 +6,15 @@ from __future__ import annotations
 import argparse
 import sys
 
+import boto3
 import yaml
+
+import output_parsing
+
+
+from clients import create_clients
+from function import invoke_function
+from output import console_print
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -45,6 +53,10 @@ def build_parser() -> argparse.ArgumentParser:
   subparsers.required = False
 
   subparsers.add_parser("debug", help="Print debug information.")
+  subparsers.add_parser(
+    "gci",
+    help="Get caller identity for all profile/region combinations.",
+  )
   # Placeholder subcommand
   subparsers.add_parser("example", help="Example subcommand (placeholder).")
 
@@ -79,6 +91,14 @@ def main(argv: list[str] | None = None) -> int:
     print(f'config file: {config}')
     print(f'profiles: {profiles}')
     print(f'regions: {regions}')
+    return 0
+
+  if args.command == "gci":
+    function_name = "get_caller_identity"
+    sessions, clients = create_clients(profiles, regions, ["sts"])
+    result = invoke_function(clients, function_name, None)
+    headers, output = output_parsing.parse_gci(result)
+    console_print(headers, output)
     return 0
 
   # TODO: route subcommands here
