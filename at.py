@@ -48,6 +48,12 @@ def build_parser() -> argparse.ArgumentParser:
     metavar="REGION",
     help="AWS region to use.",
   )
+  parser.add_argument(
+    "-t",
+    "--reruntoken",
+    metavar="TOKEN",
+    help="Rerun token to rerun against data from a previous run.",
+  )
 
   subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
   subparsers.required = False
@@ -76,6 +82,7 @@ def main(argv: list[str] | None = None) -> int:
   args = parser.parse_args(argv)
   config = args.config
   profile = args.profile
+  rerun_token = args.reruntoken
   with open(config, "r", encoding="utf-8") as handle:
     config_data = yaml.safe_load(handle) or {}
   if profile:
@@ -104,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
   if args.command == "gci":
     function_name = "get_caller_identity"
     sessions, clients = create_clients(profiles, regions, ["sts"])
-    result = invoke_function(clients, function_name, None)
+    result = invoke_function(clients, function_name, parameters=None)
     headers, output = output_parsing.parse_gci(result)
     console_print(headers, output)
     return 0
@@ -112,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
   if args.command == "ec2list":
     function_name = "describe_instances"
     sessions, clients = create_clients(profiles, regions, ["ec2"])
-    result = invoke_function(clients, function_name, None)
+    result = invoke_function(clients, function_name, parameters=None)
     headers, output = output_parsing.parse_ec2list(result)
     console_print(headers, output)
     return 0
@@ -120,9 +127,9 @@ def main(argv: list[str] | None = None) -> int:
   if args.command == "rdslist":
     function_name = "describe_db_instances"
     sessions, clients = create_clients(profiles, regions, ["rds"])
-    instances_result = invoke_function(clients, function_name, None)
+    instances_result = invoke_function(clients, function_name, parameters=None)
     function_name = "describe_db_clusters"
-    clusters_result = invoke_function(clients, function_name, None)
+    clusters_result = invoke_function(clients, function_name, parameters=None)
     headers, output = output_parsing.parse_rdslist(instances_result, clusters_result)
     console_print(headers, output)
     return 0
