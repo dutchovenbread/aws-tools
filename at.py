@@ -57,6 +57,10 @@ def build_parser() -> argparse.ArgumentParser:
     "gci",
     help="Get caller identity for all profile/region combinations.",
   )
+  subparsers.add_parser(
+    "ec2list",
+    help="List EC2 instances for all profile/region combinations.",
+  )
   # Placeholder subcommand
   subparsers.add_parser("example", help="Example subcommand (placeholder).")
 
@@ -80,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     regions = config_data.get("regions", ["us-east-2"])
 
   if args.version:
-    print("at 0.1.0")
+    print("at 0.2.0")
     return 0
 
   if args.command is None:
@@ -98,6 +102,14 @@ def main(argv: list[str] | None = None) -> int:
     sessions, clients = create_clients(profiles, regions, ["sts"])
     result = invoke_function(clients, function_name, None)
     headers, output = output_parsing.parse_gci(result)
+    console_print(headers, output)
+    return 0
+
+  if args.command == "ec2list":
+    function_name = "describe_instances"
+    sessions, clients = create_clients(profiles, regions, ["ec2"])
+    result = invoke_function(clients, function_name, None)
+    headers, output = output_parsing.parse_ec2list(result)
     console_print(headers, output)
     return 0
 
