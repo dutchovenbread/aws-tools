@@ -46,12 +46,13 @@ def parse_ec2list(
 
 
 def parse_rdslist(
-	results: list[tuple[str, str, str, dict[str, Any]]],
+	instances: list[tuple[str, str, str, dict[str, Any]]],
+	clusters: list[tuple[str, str, str, dict[str, Any]]],
 ) -> tuple[list[str], list[list[str]]]:
 	headers = ["profile", "region", "name"]
 	output: list[list[str]] = []
 
-	for profile, region, _client_type, response in results:
+	for profile, region, _client_type, response in clusters:
 		for cluster in response.get("DBClusters", []) or []:
 			output.append(
 				[
@@ -60,6 +61,7 @@ def parse_rdslist(
 					str(cluster.get("DatabaseName", "")),
 				]
 			)
+	for profile, region, _client_type, response in instances:
 		for instance in response.get("DBInstances", []) or []:
 			output.append(
 				[

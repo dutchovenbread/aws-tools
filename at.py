@@ -123,6 +123,8 @@ def main(argv: list[str] | None = None) -> int:
     instances_result = invoke_function(clients, function_name, None)
     function_name = "describe_db_clusters"
     clusters_result = invoke_function(clients, function_name, None)
+    headers, output = output_parsing.parse_rdslist(instances_result, clusters_result)
+    console_print(headers, output)
     return 0
 
   # TODO: route subcommands here
