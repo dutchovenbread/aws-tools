@@ -1,0 +1,5 @@
+Created virtual environment:
+ python3.15 -m venv .venv
+
+Command to reestablish my SSO session:
+aws sso login --profile AdministratorAccess-860377398420 
