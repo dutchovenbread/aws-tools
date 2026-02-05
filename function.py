@@ -11,8 +11,9 @@ def build_filename(
   region: str,
   client_type: str,
   key: str | None,
+  directory: str,
 ) -> Path:
-  cache_dir = Path("cache")
+  cache_dir = Path(directory)
   cache_dir.mkdir(parents=True, exist_ok=True)
   key_prefix = f"{key}_" if key else ""
   return cache_dir / f"{key_prefix}{profile_name}_{region}_{client_type}.json"
@@ -26,6 +27,7 @@ def invoke_function(
   read: bool = False,
   write: bool = False,
   key: str | None = None,
+  directory: str = "./cache/",
 ) -> list[tuple[str, str, str, Any]]:
   results: list[tuple[str, str, str, Any]] = []
   parameters = list(parameters or [])
@@ -38,8 +40,9 @@ def invoke_function(
     read: bool,
     write: bool,
     key: str | None,
+    directory: str,
   ) -> tuple[str, str, str, Any]:
-    cache_path = build_filename(profile_name, region, client_type, key)
+    cache_path = build_filename(profile_name, region, client_type, key, directory)
     if read and cache_path.exists():
       with cache_path.open("r", encoding="utf-8") as handle:
         response = json.load(handle)
@@ -69,6 +72,7 @@ def invoke_function(
               read,
               write,
               key,
+              directory,
             )
           )
 
