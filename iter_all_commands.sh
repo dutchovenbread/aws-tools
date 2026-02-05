@@ -10,5 +10,5 @@ subcommands=(
 )
 
 for subcommand in "${subcommands[@]}"; do
-	at "$subcommand"
+	at -t test_run --write "$subcommand"
 done

@@ -64,6 +64,13 @@ def build_parser() -> argparse.ArgumentParser:
     action="store_true",
     help="Enable write mode.",
   )
+  parser.add_argument(
+    "-d",
+    "--directory",
+    default="./cache/",
+    metavar="DIR",
+    help="Cache directory (default: ./cache/).",
+  )
 
   subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
   subparsers.required = False
@@ -95,6 +102,7 @@ def main(argv: list[str] | None = None) -> int:
   rerun_token = args.reruntoken
   read = args.read
   write = args.write
+  directory = args.directory
   if write and not rerun_token:
     rerun_token = create_key()
   with open(config, "r", encoding="utf-8") as handle:
@@ -132,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
       read=read,
       write=write,
       key=rerun_token,
+      directory=directory,
     )
     headers, output = output_parsing.parse_gci(result)
     console_print(headers, output)
@@ -147,6 +156,7 @@ def main(argv: list[str] | None = None) -> int:
       read=read,
       write=write,
       key=rerun_token,
+      directory=directory,
     )
     headers, output = output_parsing.parse_ec2list(result)
     console_print(headers, output)
@@ -162,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
       read=read,
       write=write,
       key=rerun_token,
+      directory=directory,
     )
     function_name = "describe_db_clusters"
     clusters_result = invoke_function(
@@ -171,6 +182,7 @@ def main(argv: list[str] | None = None) -> int:
       read=read,
       write=write,
       key=rerun_token,
+      directory=directory,
     )
     headers, output = output_parsing.parse_rdslist(instances_result, clusters_result)
     console_print(headers, output)
