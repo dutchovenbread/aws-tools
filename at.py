@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import sys
 
-import boto3
 import yaml
 
 import output_parsing
@@ -14,6 +13,7 @@ import output_parsing
 
 from clients import create_clients
 from function import invoke_function
+from key import create_key
 from output import console_print
 
 
@@ -54,6 +54,16 @@ def build_parser() -> argparse.ArgumentParser:
     metavar="TOKEN",
     help="Rerun token to rerun against data from a previous run.",
   )
+  parser.add_argument(
+    "--read",
+    action="store_true",
+    help="Enable read mode.",
+  )
+  parser.add_argument(
+    "--write",
+    action="store_true",
+    help="Enable write mode.",
+  )
 
   subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
   subparsers.required = False
@@ -83,6 +93,10 @@ def main(argv: list[str] | None = None) -> int:
   config = args.config
   profile = args.profile
   rerun_token = args.reruntoken
+  read = args.read
+  write = args.write
+  if write and not rerun_token:
+    rerun_token = create_key()
   with open(config, "r", encoding="utf-8") as handle:
     config_data = yaml.safe_load(handle) or {}
   if profile:
@@ -111,7 +125,14 @@ def main(argv: list[str] | None = None) -> int:
   if args.command == "gci":
     function_name = "get_caller_identity"
     sessions, clients = create_clients(profiles, regions, ["sts"])
-    result = invoke_function(clients, function_name, parameters=None)
+    result = invoke_function(
+      clients,
+      function_name,
+      parameters=None,
+      read=read,
+      write=write,
+      key=rerun_token,
+    )
     headers, output = output_parsing.parse_gci(result)
     console_print(headers, output)
     return 0
@@ -119,7 +140,14 @@ def main(argv: list[str] | None = None) -> int:
   if args.command == "ec2list":
     function_name = "describe_instances"
     sessions, clients = create_clients(profiles, regions, ["ec2"])
-    result = invoke_function(clients, function_name, parameters=None)
+    result = invoke_function(
+      clients,
+      function_name,
+      parameters=None,
+      read=read,
+      write=write,
+      key=rerun_token,
+    )
     headers, output = output_parsing.parse_ec2list(result)
     console_print(headers, output)
     return 0
@@ -127,9 +155,23 @@ def main(argv: list[str] | None = None) -> int:
   if args.command == "rdslist":
     function_name = "describe_db_instances"
     sessions, clients = create_clients(profiles, regions, ["rds"])
-    instances_result = invoke_function(clients, function_name, parameters=None)
+    instances_result = invoke_function(
+      clients,
+      function_name,
+      parameters=None,
+      read=read,
+      write=write,
+      key=rerun_token,
+    )
     function_name = "describe_db_clusters"
-    clusters_result = invoke_function(clients, function_name, parameters=None)
+    clusters_result = invoke_function(
+      clients,
+      function_name,
+      parameters=None,
+      read=read,
+      write=write,
+      key=rerun_token,
+    )
     headers, output = output_parsing.parse_rdslist(instances_result, clusters_result)
     console_print(headers, output)
     return 0
