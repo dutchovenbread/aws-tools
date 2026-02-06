@@ -14,7 +14,7 @@ import output_parsing
 from clients import create_clients
 from function import invoke_function, invoke_function_special_parameters
 from key import create_key
-from output import console_print
+from output import write_output
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -71,6 +71,20 @@ def build_parser() -> argparse.ArgumentParser:
     metavar="DIR",
     help="Cache directory (default: ./cache/).",
   )
+  parser.add_argument(
+    "-o",
+    "--output",
+    default="console",
+    choices=["console", "csv", "excel"],
+    help="Output format (console, csv, excel).",
+  )
+  parser.add_argument(
+    "-f",
+    "--file",
+    default="out.csv",
+    metavar="FILE",
+    help="Output file name (default: out.csv).",
+  )
 
   subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
   subparsers.required = False
@@ -111,6 +125,8 @@ def main(argv: list[str] | None = None) -> int:
   read = args.read
   write = args.write
   directory = args.directory
+  output_format = args.output
+  output_file = args.file
   if write and not rerun_token:
     rerun_token = create_key()
   with open(config, "r", encoding="utf-8") as handle:
@@ -151,7 +167,7 @@ def main(argv: list[str] | None = None) -> int:
       directory=directory,
     )
     headers, output = output_parsing.parse_gci(result)
-    console_print(headers, output)
+    write_output(headers, output, output_format, output_file)
     return 0
 
   if args.command == "ec2list":
@@ -167,7 +183,7 @@ def main(argv: list[str] | None = None) -> int:
       directory=directory,
     )
     headers, output = output_parsing.parse_ec2list(result)
-    console_print(headers, output)
+    write_output(headers, output, output_format, output_file)
     return 0
 
   if args.command == "rdslist":
@@ -193,7 +209,7 @@ def main(argv: list[str] | None = None) -> int:
       directory=directory,
     )
     headers, output = output_parsing.parse_rdslist(instances_result, clusters_result)
-    console_print(headers, output)
+    write_output(headers, output, output_format, output_file)
     return 0
 
   if args.command == "s3list":
@@ -209,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
       directory=directory,
     )
     headers, output = output_parsing.parse_s3list(result)
-    console_print(headers, output)
+    write_output(headers, output, output_format, output_file)
     return 0
 
   if args.command == "s3sizes":
@@ -256,7 +272,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     headers, output = output_parsing.parse_s3sizes(cloudwatch_results)
-    console_print(headers, output)
+    write_output(headers, output, output_format, output_file)
 
     return 0
 

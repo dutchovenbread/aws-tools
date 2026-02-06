@@ -6,9 +6,11 @@ subcommands=(
 	gci
 	ec2list
 	rdslist
+	s3list
+	s3sizes
 	example
 )
 
 for subcommand in "${subcommands[@]}"; do
-	at -t test_run --write "$subcommand"
+	at -t iter_run --write "$subcommand"
 done
