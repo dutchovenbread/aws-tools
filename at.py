@@ -12,7 +12,7 @@ import output_parsing
 
 
 from clients import create_clients
-from function import invoke_function
+from function import invoke_function, invoke_function_special_parameters
 from key import create_key
 from output import console_print
 
@@ -87,6 +87,14 @@ def build_parser() -> argparse.ArgumentParser:
   subparsers.add_parser(
     "rdslist",
     help="List RDS instances for all profile/region combinations.",
+  )
+  subparsers.add_parser(
+    "s3list",
+    help="List S3 buckets for all profile/region combinations.",
+  )
+  subparsers.add_parser(
+    "s3sizes",
+    help="Get S3 bucket sizing for all profile/region combinations.",
   )
   # Placeholder subcommand
   subparsers.add_parser("example", help="Example subcommand (placeholder).")
@@ -187,6 +195,71 @@ def main(argv: list[str] | None = None) -> int:
     headers, output = output_parsing.parse_rdslist(instances_result, clusters_result)
     console_print(headers, output)
     return 0
+
+  if args.command == "s3list":
+    function_name = "list_buckets"
+    sessions, clients = create_clients(profiles, regions, ["s3"])
+    result = invoke_function(
+      clients,
+      function_name,
+      parameters=None,
+      read=read,
+      write=write,
+      key=rerun_token,
+      directory=directory,
+    )
+    headers, output = output_parsing.parse_s3list(result)
+    console_print(headers, output)
+    return 0
+
+  if args.command == "s3sizes":
+    function_name = "list_buckets"
+    sessions, clients = create_clients(profiles, regions, ["s3"])
+    result = invoke_function(
+      clients,
+      function_name,
+      parameters=None,
+      read=read,
+      write=write,
+      key=rerun_token,
+      directory=directory,
+    )
+    headers, output = output_parsing.parse_s3list(result)
+    bucket_map: dict[str, dict[str, list[str]]] = {}
+    for profile_name, region, bucket_name in output:
+      bucket_map.setdefault(profile_name, {}).setdefault(region, []).append(bucket_name)
+    sessions, cloudwatch_clients = create_clients(profiles, regions, ["cloudwatch"])
+    cloudwatch_parameters = {}
+    for key_profile, regions in bucket_map.items():
+      for key_region, buckets in regions.items():
+        for bucket in buckets:
+          cloudwatch_parameters.setdefault(key_profile, {}).setdefault(key_region, {})[bucket] = {
+            "Namespace": "AWS/S3",
+            "MetricName": "BucketSizeBytes",
+            "Dimensions": [
+              {"Name": "BucketName", "Value": bucket},
+              {"Name": "StorageType", "Value": "StandardStorage"},
+            ],
+            "StartTime": "2024-01-01T00:00:00Z",
+            "EndTime": "2024-12-31T23:59:59Z",
+            "Period": 86400,
+            "Statistics": ["Average"],
+          }
+    cloudwatch_results = invoke_function_special_parameters(
+      cloudwatch_clients,
+      "get_metric_statistics",
+      parameters_dict=cloudwatch_parameters,
+      read=read,
+      write=write,
+      key=rerun_token,
+      directory=directory,
+    )
+
+    headers, output = output_parsing.parse_s3sizes(cloudwatch_results)
+    console_print(headers, output)
+
+    return 0
+
 
   # TODO: route subcommands here
 

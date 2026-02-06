@@ -72,3 +72,47 @@ def parse_rdslist(
 			)
 
 	return headers, output
+
+
+def parse_s3list(
+	results: list[tuple[str, str, str, dict[str, Any]]],
+) -> tuple[list[str], list[list[str]]]:
+	headers = ["profile", "region", "bucket_name"]
+	output: list[list[str]] = []
+
+	for profile, region, _client_type, response in results:
+		for bucket in response.get("Buckets", []) or []:
+			output.append(
+				[
+					profile,
+					region,
+					str(bucket.get("Name", "")),
+				]
+			)
+
+	return headers, output
+
+
+def parse_s3sizes(
+	results: list[tuple[str, str, str, dict[str, Any]]],
+) -> tuple[list[str], list[list[str]]]:
+	
+  headers = ["profile", "region", "bucket_name", "size in MB"]
+  output: list[list[str]] = []
+	
+  for profile, region, _client_type, bucket_name, response in results:
+    print(f'Unpacked values: profile={profile}, region={region}, bucket_name={bucket_name}, response={response}')
+    if response['Datapoints']:
+      # Get the most recent data point
+      latest_datapoint = sorted(response['Datapoints'], key=lambda x: x['Timestamp'], reverse=True)[0]
+      size_bytes = int(latest_datapoint['Average'])
+      size_mb = size_bytes / (1024 ** 2)
+
+
+    output.append([
+      profile,
+      region,
+      bucket_name,
+      size_mb,
+    ])
+  return headers, output
