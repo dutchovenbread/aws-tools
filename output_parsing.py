@@ -107,6 +107,8 @@ def parse_s3sizes(
       latest_datapoint = sorted(response['Datapoints'], key=lambda x: x['Timestamp'], reverse=True)[0]
       size_bytes = int(latest_datapoint['Average'])
       size_mb = size_bytes / (1024 ** 2)
+    else:
+      size_mb = 0.0
 
 
     output.append([
