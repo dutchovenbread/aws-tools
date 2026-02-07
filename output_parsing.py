@@ -101,14 +101,13 @@ def parse_s3sizes(
   output: list[list[str]] = []
 	
   for profile, region, _client_type, bucket_name, response in results:
-    print(f'Unpacked values: profile={profile}, region={region}, bucket_name={bucket_name}, response={response}')
     if response['Datapoints']:
       # Get the most recent data point
       latest_datapoint = sorted(response['Datapoints'], key=lambda x: x['Timestamp'], reverse=True)[0]
       size_bytes = int(latest_datapoint['Average'])
       size_mb = size_bytes / (1024 ** 2)
     else:
-      size_mb = 0.0
+      size_mb = None
 
 
     output.append([

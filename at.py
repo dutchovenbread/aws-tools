@@ -110,6 +110,18 @@ def build_parser() -> argparse.ArgumentParser:
     "s3sizes",
     help="Get S3 bucket sizing for all profile/region combinations.",
   )
+  freeform_parser = subparsers.add_parser(
+    "freeform",
+    help="Run a freeform command.",
+  )
+  freeform_parser.add_argument(
+    "service",
+    help="Service name.",
+  )
+  freeform_parser.add_argument(
+    "freeform_command",
+    help="Command name.",
+  )
   # Placeholder subcommand
   subparsers.add_parser("example", help="Example subcommand (placeholder).")
 
@@ -274,6 +286,29 @@ def main(argv: list[str] | None = None) -> int:
     headers, output = output_parsing.parse_s3sizes(cloudwatch_results)
     write_output(headers, output, output_format, output_file)
 
+    return 0
+
+  if args.command == "freeform":
+    print(f'Running freeform command: {args.service} {args.freeform_command}')
+    if not args.service or not args.freeform_command:
+      parser.error("freeform requires two arguments: service and command")
+    sessions, clients = create_clients(profiles, regions, [args.service])
+    result = invoke_function(
+      clients,
+      args.freeform_command,
+      parameters=None,
+      read=read,
+      write=write,
+      key=rerun_token,
+      directory=directory,
+    )
+    for profile_name, region, client_type, response in result:
+      print(f"{profile_name} {region} {client_type}")
+      if isinstance(response, dict):
+        for key, value in response.items():
+          print(f"{key}: {value}")
+      else:
+        print(response)
     return 0
 
 
