@@ -99,6 +99,10 @@ def build_parser() -> argparse.ArgumentParser:
     help="List EC2 instances for all profile/region combinations.",
   )
   subparsers.add_parser(
+    "ebslist",
+    help="List EBS volumes for all profile/region combinations.",
+  )
+  subparsers.add_parser(
     "rdslist",
     help="List RDS instances for all profile/region combinations.",
   )
@@ -195,6 +199,22 @@ def main(argv: list[str] | None = None) -> int:
       directory=directory,
     )
     headers, output = output_parsing.parse_ec2list(result)
+    write_output(headers, output, output_format, output_file)
+    return 0
+
+  if args.command == "ebslist":
+    function_name = "describe_volumes"
+    sessions, clients = create_clients(profiles, regions, ["ec2"])
+    result = invoke_function(
+      clients,
+      function_name,
+      parameters=None,
+      read=read,
+      write=write,
+      key=rerun_token,
+      directory=directory,
+    )
+    headers, output = output_parsing.parse_ebslist(result)
     write_output(headers, output, output_format, output_file)
     return 0
 
