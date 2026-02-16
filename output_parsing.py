@@ -45,6 +45,29 @@ def parse_ec2list(
 	return headers, output
 
 
+def parse_ebslist(
+	results: list[tuple[str, str, str, dict[str, Any]]],
+) -> tuple[list[str], list[list[str]]]:
+	headers = ["profile", "region", "volume_id", "state", "size", "volume_type", "iops"]
+	output: list[list[str]] = []
+
+	for profile, region, _client_type, response in results:
+		for volume in response.get("Volumes", []) or []:
+			output.append(
+				[
+					profile,
+					region,
+					str(volume.get("VolumeId", "")),
+					str(volume.get("State", "")),
+					str(volume.get("Size", "")),
+					str(volume.get("VolumeType", "")),
+					str(volume.get("Iops", "")),
+				]
+			)
+
+	return headers, output
+
+
 def parse_rdslist(
 	instances: list[tuple[str, str, str, dict[str, Any]]],
 	clusters: list[tuple[str, str, str, dict[str, Any]]],
